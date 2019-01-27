@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AB Testing App</title>
+    <meta charset="utf-8" />
+    <script src="/Users/andrewlai/js/d3_v5/d3.min.js" charset="utf-8"></script>
+</head>
+<body>
+
+    Number of observations <input type="text" id="n_observations" value="100"><br>
+    p (original): <input type="text" id="p_original" value="0.6"><br>
+    p (variation #1): <input type="text" id="p_variation1" value="0.6"><br><br>
+
+    <button onclick="update_simulation()">Update simulation</button>
+
+    <div id="simulated_experiment" style="width: 300px; height: 800px;float:left"></div>
+    <script>
+
+      var margin = {top: 20, right: 20, bottom: 100, left: 60};
+      var width = 600 - margin.left - margin.right;
+      var height = 400 - margin.top - margin.bottom;
+
+      // Set up X and Y axis scales
+      var x = d3.scaleLinear()
+          .range([0,  width])
+          .domain([0, document.getElementById("n_observations").value]);
+      var xAxis = d3.axisBottom()
+          .scale(x);
+          // .ticks(7)
+          // .tickValues([0,24,24*2,24*3,24*4,24*5,24*6,24*7,24*8,24*9]);
+      var y = d3.scaleLinear()
+          .range([height, 0])
+          .domain([0, 1]);
+      var yAxis = d3.axisLeft()
+          .scale(y);
+
+
+    // Initialize charts
+      var svg = d3.select("#simulated_experiment").append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .attr("id", "svg_1")
+            .append("g")
+                        .attr("transform",
+                          "translate(" + margin.left + "," + margin.top + ")")
+                          .attr("id", "group_1");
+
+        // x axis
+        svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(xAxis)
+            .append("text")
+              .text("Observations")
+              .attr("dy", "3em")
+              .attr("text-align", "center")
+              .attr("x", width / 2 - margin.right - margin.left);
+
+        // y axis
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+          .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -height / 2)
+            .attr("dy", "-2em")
+            .text("Percent successful");
+
+        // Title
+        // svg.append("text")
+        //   .attr("id", "title_" + 1)
+        //   .text("Initializing...")
+        //   .attr("x",x(50))
+        //   .attr("y", y(0.9))
+        //   .attr("font-size", "40px")
+        //   .attr("font-weight", "bold")
+        //   .style("text-anchor", "middle")
+
+        var plot_original = d3.line()
+          .x(function(d) {return x(+d.observation); })
+          .y(function(d) {return y(+d.original_pct_success); });
+
+        var plot_variation1 = d3.line()
+          .x(function(d) {return x(+d.observation); })
+          .y(function(d) {return y(+d.variation1_pct_success); });
+
+        var linegrp = d3.select('#group_1').append("g")
+                        .attr("class", "linegroup")
+                        .attr("id", "linegroup_1")
+
+        var original_line = d3.select('#linegroup_1').append("path")
+                              .attr("class", "daily_performance")
+                              .attr("id", "original-line" )
+                              .attr("stroke", "blue")
+                              .attr("stroke-width", 2)
+                              .attr("fill", "none")
+                              .style("opacity", 0)
+        var variation1_line = d3.select('#linegroup_1').append("path")
+                                .attr("class", "daily_performance")
+                                .attr("id", "variation1-line" )
+                                .attr("stroke", "red")
+                                .attr("stroke-width", 2)
+                                .attr("fill", "none")
+                                .style("opacity", 0)
+
+        function update_graphs(data){
+            // console.log(data)
+
+            d3.select('#original-line')
+              .transition()
+              .attr("d", plot_original(data))
+              .duration(500)
+              .style("opacity",0.8);
+
+            d3.select('#variation1-line')
+              .transition()
+              .attr("d", plot_variation1(data))
+              .duration(500)
+              .style("opacity",0.8);
+              }
+
+    </script>
+
+    <script>
+
+      // Initialize graph
+      function update_simulation(station){
+        n_observations =  document.getElementById("n_observations").value;
+        p_original =  document.getElementById("p_original").value;
+        p_variation1 =  document.getElementById("p_variation1").value;
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var data = JSON.parse(this.responseText);
+                console.log(data);
+                update_graphs(data)
+            }
+        };
+
+        // Debugging test
+        // xhttp.open("POST", "http://0.0.0.0:5000/echo_payload")
+        // xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8")
+        // xhttp.send(JSON.stringify({"n_observations":n_observations,
+        //                            "p_original":p_original,
+        //                            "p_variation1":p_variation1})
+
+         xhttp.open("POST", "http://0.0.0.0:5000/update_simulation")
+         xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8")
+         xhttp.send(JSON.stringify({"n_observations":n_observations,
+                                    "p_original":p_original,
+                                    "p_variation1":p_variation1}))
+
+    }
+
+    update_simulation()
+    </script>
+
+
+</body>
+</html>
+
+
+<!-- // Scale the range of the data again
+    	x.domain(d3.extent(data, function(d) { return d.date; }));
+	    y.domain([0, d3.max(data, function(d) { return d.close; })]);
+
+    // Select the section we want to apply our changes to
+    var svg = d3.select("body").transition();
+
+    // Make the changes
+        svg.select(".line")   // change the line
+            .duration(750)
+            .attr("d", valueline(data));
+        svg.select(".x.axis") // change the x axis
+            .duration(750)
+            .call(xAxis);
+        svg.select(".y.axis") // change the y axis
+            .duration(750)
+            .call(yAxis);
+
+        //   // Get the data
+        //     var testdata = [
+        //         {
+        //           "observation": 1,
+        //           "variation1_pct_success": 0.2
+        //         },
+        //         {
+        //           "observation": 2,
+        //           "variation1_pct_success": 0.4
+        //         },
+        //         {
+        //           "observation": 3,
+        //           "variation1_pct_success": 0.1
+        //         },
+        //         {
+        //           "observation": 4,
+        //           "variation1_pct_success": 0.5
+        //         },
+        //         {
+        //           "observation": 5,
+        //           "variation1_pct_success": 0.3
+        //         }
+        //     ];
+        //
+        // svg.append("path") // Add the valueline path.
+        //     .attr("d", theline(testdata)); -->
