@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime
 import time
 import json
+from scipy.stats import binom_test
 
 ################################################################
 ## Flask app
@@ -28,11 +29,15 @@ def base_simulation(n_obs, orgn_p, var1_p):
     var1_pct_success = y.cumsum()/np.arange(1, n_obs+1)
     var1_n_success = y.cumsum()
 
-    df = pd.DataFrame([orgn_pct_success, var1_pct_success, var1_n_success]).T.reset_index()
+    # Calculate significance
+    p = [binom_test(var1_n_success[i], n=i+1, p=orgn_pct_success[i]) for i in range(0,n_obs)]
+
+    df = pd.DataFrame([orgn_pct_success, var1_pct_success, var1_n_success, p]).T.reset_index()
     df.columns = ['observation',
                     'original_pct_success',
                     'variation1_pct_success',
-                    'variation1_n_success']
+                    'variation1_n_success',
+                    'p']
 
     df['observation'] = df['observation'] + 1
 

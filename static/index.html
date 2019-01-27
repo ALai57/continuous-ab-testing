@@ -41,15 +41,17 @@
           .attr("height", height + margin.top + margin.bottom)
           .attr("id", "svg_1")
             .append("g")
-                        .attr("transform",
-                          "translate(" + margin.left + "," + margin.top + ")")
-                          .attr("id", "group_1");
+              .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")")
+                .attr("id", "group_1");
 
         // x axis
         svg.append("g")
               .attr("class", "x axis")
               .attr("transform", "translate(0," + height + ")")
               .call(xAxis)
+              .attr('class', 'x-axis')
+              .attr('id', 'x-axis-simulation')
             .append("text")
               .text("Observations")
               .attr("dy", "3em")
@@ -119,8 +121,103 @@
               .style("opacity",0.8);
               }
 
+
+
+    </script>
+    <script>
+    var svg2 = d3.select("#simulated_experiment").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .attr("id", "svg_2")
+          .append("g")
+                      .attr("transform",
+                        "translate(" + margin.left + "," + margin.top + ")")
+                        .attr("id", "group_2");
+
+      // x axis
+      svg2.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis)
+            .attr('class', 'x-axis')
+          .append("text")
+            .text("Observations")
+            .attr("dy", "3em")
+            .attr("text-align", "center")
+            .attr("x", width / 2 - margin.right - margin.left);
+
+      // y axis
+      svg2.append("g")
+          .attr("class", "y axis")
+          .call(yAxis)
+        .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("x", -height / 2)
+          .attr("dy", "-2em")
+          .text("Percent successful");
+
+      var plot_p = d3.line()
+        .x(function(d) {return x(+d.observation); })
+        .y(function(d) {return y(+d.p); });
+      var plot_alpha = d3.line()
+        .x(function(d) {return x(+d.observation); })
+        .y(function(d) {return y(+d.alpha); });
+
+      var linegrp_p = d3.select('#group_2').append("g")
+                      .attr("class", "linegroup")
+                      .attr("id", "linegroup_2")
+
+      var p_line = d3.select('#linegroup_2').append("path")
+                            .attr("class", "daily_performance")
+                            .attr("id", "p-line" )
+                            .attr("stroke", "blue")
+                            .attr("stroke-width", 2)
+                            .attr("fill", "none")
+                            .style("opacity", 0)
+
+      var alpha_line = d3.select('#linegroup_2').append("path")
+                            .attr("class", "daily_performance")
+                            .attr("id", "alpha-line" )
+                            .attr("stroke", "orange")
+                            .attr("stroke-width", 2)
+                            .attr("fill", "none")
+                            .style("opacity", 0)
+
+      function update_p_graphs(data){
+          // console.log(data)
+
+          var n_observations = document.getElementById("n_observations").value;
+          var alpha_data = [{'observation':0, 'alpha':0.05}, {'observation':n_observations, 'alpha':0.05}]
+
+          d3.select('#p-line')
+            .transition()
+            .attr("d", plot_p(data))
+            .duration(500)
+            .style("opacity",0.8);
+
+          d3.select('#alpha-line')
+            .transition()
+            .attr("d", plot_alpha(alpha_data))
+            .duration(500)
+            .style("opacity",0.8);
+            }
     </script>
 
+    <script>
+      function update_axes(){
+        x.domain([0, document.getElementById("n_observations").value])
+        d3.select("#svg_1")
+              .transition()
+              .select(".x-axis")
+              .duration(750)
+              .call(xAxis);
+        d3.select("#svg_2")
+              .transition()
+              .select(".x-axis")
+              .duration(750)
+              .call(xAxis);
+          }
+    </script>
     <script>
 
       // Initialize graph
@@ -133,8 +230,10 @@
         xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 var data = JSON.parse(this.responseText);
-                console.log(data);
+                // console.log(data);
+                update_axes()
                 update_graphs(data)
+                update_p_graphs(data)
             }
         };
 
@@ -179,29 +278,29 @@
             .duration(750)
             .call(yAxis);
 
-        //   // Get the data
-        //     var testdata = [
-        //         {
-        //           "observation": 1,
-        //           "variation1_pct_success": 0.2
-        //         },
-        //         {
-        //           "observation": 2,
-        //           "variation1_pct_success": 0.4
-        //         },
-        //         {
-        //           "observation": 3,
-        //           "variation1_pct_success": 0.1
-        //         },
-        //         {
-        //           "observation": 4,
-        //           "variation1_pct_success": 0.5
-        //         },
-        //         {
-        //           "observation": 5,
-        //           "variation1_pct_success": 0.3
-        //         }
-        //     ];
-        //
-        // svg.append("path") // Add the valueline path.
-        //     .attr("d", theline(testdata)); -->
+  //   // Get the data
+  //     var testdata = [
+  //         {
+  //           "observation": 1,
+  //           "variation1_pct_success": 0.2
+  //         },
+  //         {
+  //           "observation": 2,
+  //           "variation1_pct_success": 0.4
+  //         },
+  //         {
+  //           "observation": 3,
+  //           "variation1_pct_success": 0.1
+  //         },
+  //         {
+  //           "observation": 4,
+  //           "variation1_pct_success": 0.5
+  //         },
+  //         {
+  //           "observation": 5,
+  //           "variation1_pct_success": 0.3
+  //         }
+  //     ];
+  //
+  // svg.append("path") // Add the valueline path.
+  //     .attr("d", theline(testdata)); -->
