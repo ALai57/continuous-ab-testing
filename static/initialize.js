@@ -349,7 +349,8 @@ var svg = d3.select("#simulated_experiment").append("svg")
     //                            "p_original":p_original,
     //                            "p_variation1":p_variation1})
 
-     xhttp.open("POST", "http://0.0.0.0:5000/update_simulation")
+     // xhttp.open("POST", "http://0.0.0.0:5000/update_simulation")
+     xhttp.open("POST", "/update_simulation")
      xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8")
      xhttp.send(JSON.stringify({"n_observations":n_observations,
                                 "p_original":p_original,
